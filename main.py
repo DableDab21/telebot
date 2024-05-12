@@ -1,6 +1,6 @@
 import telebot
 
-bot = telebot.TeleBot('7149862341:AAHJ7iIAFe7fLUL_h5-6rQDU4LzgL_UNc20')
+bot = telebot.TeleBot('Token')
 
 
 @bot.message_handler(commands=['site', 'website'])
