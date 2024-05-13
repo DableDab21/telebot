@@ -1,6 +1,7 @@
 import telebot
 import sqlite3
 
+<<<<<<< HEAD
 bot = telebot.TeleBot('7149862341:AAHJ7iIAFe7fLUL_h5-6rQDU4LzgL_UNc20')
 name = None
 
@@ -16,6 +17,9 @@ def start(message):
 
     bot.send_message(message.chat.id, 'Привет, давай тебя зарегистрируем! Введите ваше имя')
     bot.register_next_step_handler(message, user_name)
+=======
+bot = telebot.TeleBot('Token')
+>>>>>>> 72aa26052862010eba3d0aa0014e7baed3c9d7b5
 
 
 def user_name(message):
