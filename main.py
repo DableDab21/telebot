@@ -1,33 +1,56 @@
 import telebot
+import sqlite3
 
 bot = telebot.TeleBot('7149862341:AAHJ7iIAFe7fLUL_h5-6rQDU4LzgL_UNc20')
+name = None
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    conn = sqlite3.connect('tatusha.db')
+    cur = conn.cursor()
+
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pass TEXT)')
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    bot.send_message(message.chat.id, 'Привет, давай тебя зарегистрируем! Введите ваше имя')
+    bot.register_next_step_handler(message, user_name)
 
 
-@bot.message_handler(commands=['site', 'website'])
-def open_website(message):
-    bot.send_message(message.chat.id, 'Открываю сайт...')
-    bot.send_chat_action(message.chat.id, 'typing')  # Показываем "набор сообщения"
-    bot.send_message(message.chat.id, 'https://mkgt.ru')
+def user_name(message):
+    global name
+    name = message.text.strip()
+    bot.send_message(message.chat.id, 'Введите пароль')
+    bot.register_next_step_handler(message, user_pass)
 
 
-@bot.message_handler(commands=['start', 'main', 'hello'])
-def greet_user(message):
-    bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name} {message.from_user.last_name}!')
+def user_pass(message):
+    password = message.text.strip()
+
+    conn = sqlite3.connect('tatusha.db')
+    cur = conn.cursor()
+
+    cur.execute('INSERT INTO users (name, pass) VALUES (?, ?)', (name, password))
+    conn.commit()
+    cur.close()
+    conn.close()
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton('Список пользователей', callback_data='users'))
+    bot.send_message(message.chat.id, 'Пользователь зарегистрирован!', reply_markup=markup)
 
 
-@bot.message_handler(commands=['help'])
-def help_message(message):
-    bot.send_message(message.chat.id, '<b>Справочная информация!</b>', parse_mode='html')
-
-
-@bot.message_handler(func=lambda message: True)
-def handle_messages(message):
-    if message.text.lower() == 'привет':
-        bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name} {message.from_user.last_name}!')
-    elif message.text.lower() == 'id':
-        bot.reply_to(message, f'ID: {message.from_user.id}')
-    else:
-        bot.send_message(message.chat.id, "Простите, я не понимаю вас. Если вам нужна помощь, наберите /help.")
-
+@bot.callback_query_handler(func=lambda call: True)
+def callback(call):
+    conn = sqlite3.connect('tatusha.db')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM users')  # Исправлено "SELEST" на "SELECT"
+    users = cur.fetchall()
+    info = ''
+    for el in users:
+        info += f'Имя: {el[1]}, Пароль: {el[2]}\n'  # Исправлено "/n" на "\n"
+    cur.close()
+    conn.close()
+    bot.send_message(call.message.chat.id, info)  # Исправлено "message" на "call.message"
 
 bot.infinity_polling()
